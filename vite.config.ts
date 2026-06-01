@@ -19,9 +19,12 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'assets',
     cssCodeSplit: false,
+    // ★ 拆包减小单文件体积，手机弱网也能加载
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks: {
+          'vendor': ['vue', 'echarts', 'lunar-javascript'],
+        },
       },
     },
   },

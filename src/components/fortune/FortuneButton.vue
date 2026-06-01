@@ -22,10 +22,10 @@ const emit = defineEmits<{
     >
       <span v-if="loading" class="inline-block w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
       <span v-else>🔮</span>
-      {{ loading ? 'AI 解读中...' : '测算今日运势' }}
+      {{ loading ? '解读中...' : '测算今日运势' }}
     </button>
     <p v-if="!disabled && !loading" class="text-[10px] text-cosmic-muted mt-2">
-      将调用您配置的大模型进行 AI 解读（消耗 API Token）
+      纯本地计算 · 点击即出结果 · 完全离线可用
     </p>
     <p v-if="disabled" class="text-xs text-cosmic-danger mt-2">
       ⚠ 请先在八字盘面中完成排盘

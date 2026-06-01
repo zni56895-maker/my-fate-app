@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue'
+
 defineProps<{
-  activeTab: 'bazi' | 'fortune'
+  activeTab: 'bazi' | 'fortune' | 'liuyao' | 'search'
 }>()
 
 const emit = defineEmits<{
-  'update:activeTab': [tab: 'bazi' | 'fortune']
+  'update:activeTab': [tab: 'bazi' | 'fortune' | 'liuyao' | 'search']
 }>()
 
 const tabs = [
-  { key: 'bazi' as const, label: '我的八字盘面', icon: '📊' },
-  { key: 'fortune' as const, label: '今日运势指南', icon: '🔮' },
+  { key: 'bazi' as const, label: '我的八字盘面', icon: 'material-symbols:table-chart-outline' },
+  { key: 'fortune' as const, label: '今日运势指南', icon: 'material-symbols:magic-button' },
+  { key: 'liuyao' as const, label: '六爻占卜', icon: 'mdi:bagua' },
+  { key: 'search' as const, label: '六爻寻物', icon: 'mdi:search-web' },
 ]
 </script>
 
@@ -26,7 +30,7 @@ const tabs = [
           : 'text-cosmic-muted hover:text-cosmic-text',
       ]"
     >
-      <span class="mr-1.5">{{ tab.icon }}</span>{{ tab.label }}
+      <Icon :icon="tab.icon" class="inline-block text-lg mr-1.5 align-middle" />{{ tab.label }}
       <div
         v-if="activeTab === tab.key"
         class="absolute bottom-0 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-transparent via-cosmic-accent to-transparent"

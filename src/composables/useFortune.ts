@@ -1,158 +1,142 @@
 /**
- * useFortune — 今日运势测算状态
+ * useFortune — 纯本地运势测算
  *
- * 管理 AI 流式解读的完整生命周期：
- * 检查配置 → 计算流日 → 组装 Prompt → 流式请求 → 累积文本
+ * v3: 使用 fortuneDatabase.ts 的升级版断语数据库。
+ * 点击即出结果，零网络请求，完全离线可用。
  */
 
 import { reactive, toRefs } from 'vue'
-import type { FortuneState } from '@/types/fortune'
-import type { APIConfig } from '@/types/config'
-import { getTodayDailyPillar } from '@/utils/daily-pillar'
-import { buildFortunePrompt } from '@/utils/ai-prompt'
-import { streamAIResponse } from '@/utils/ai-stream'
-import type { BaziChart } from '@/types/bazi'
+import type { BaziChart, HeavenlyStem } from '@/types/bazi'
 import type { WuXingEnergyMap } from '@/types/fortune'
+import { getTodayDailyPillar } from '@/utils/daily-pillar'
+import { getTenGod } from '@/constants/stems'
+import { getDailyTenShenFortune, getShenshaFull, buildDailyFortune, buildDimExplanations, generateShenshaSummary, type DailyFortuneV3 } from '@/constants/fortuneDatabase'
+
+// ===== 类型 =====
+
+export interface FortuneResult {
+  dailyGanZhi: string
+  todayTenGod: string
+  fortune: DailyFortuneV3
+  wuxingEnergy: WuXingEnergyMap
+  shenshaDetails: { name: string; shortMeaning: string; dailyGuide: string }[]
+  shenshaAdvice: string[]
+  relationDesc: string
+  dimScores: { label: string; value: number; color: string }[]
+  dimExplanations: string[]
+}
 
 // ===== 全局状态 =====
 
-const state = reactive<FortuneState>({
-  isLoading: false,
-  isStreaming: false,
-  streamedText: '',
+const state = reactive<{
+  result: FortuneResult | null
+  computed: boolean
+  error: string | null
+}>({
+  result: null,
+  computed: false,
   error: null,
-  fortuneScore: 50,
-  scoreLabel: '',
-  dailyGanZhi: '',
-  dailyWuXing: { '木': 0, '火': 0, '土': 0, '金': 0, '水': 0 },
 })
-
-let abortController: AbortController | null = null
 
 // ===== Composable =====
 
 export function useFortune() {
-  /**
-   * 开始运势测算
-   */
-  async function calculate(
-    chart: BaziChart,
-    wuxingEnergy: WuXingEnergyMap,
-    apiConfig: APIConfig,
-  ): Promise<void> {
-    // 1. 重置状态
-    state.isLoading = true
-    state.isStreaming = true
-    state.streamedText = ''
-    state.error = null
-    state.fortuneScore = 50
-    state.scoreLabel = ''
-
-    // 2. 检查 API 配置
-    if (!apiConfig.apiKey || !apiConfig.apiKey.trim()) {
-      state.error = '请先在右上角配置中心填写 API Key'
-      state.isLoading = false
-      state.isStreaming = false
-      return
-    }
-
-    // 3. 获取今日流日
-    const daily = getTodayDailyPillar()
-    state.dailyGanZhi = daily.ganZhi
-
-    // 4. 组装 Prompt
-    const messages = buildFortunePrompt(
-      chart,
-      daily.ganZhi,
-      daily.gan,
-      daily.zhi,
-      wuxingEnergy,
-    )
-
-    // 5. 创建 AbortController（用于取消请求）
-    abortController = new AbortController()
-
-    // 6. 流式请求
+  function calculate(chart: BaziChart, wuxingEnergy: WuXingEnergyMap): void {
     try {
-      for await (const chunk of streamAIResponse(apiConfig, messages)) {
-        if (chunk.error) {
-          state.error = chunk.error
-          state.isLoading = false
-          state.isStreaming = false
-          return
-        }
+      const daily = getTodayDailyPillar()
+      const dailyGan = daily.gan as HeavenlyStem
+      const dailyZhi = daily.zhi
+      const dayMaster = chart.dayMaster
 
-        if (chunk.done) {
-          state.isLoading = false
-          state.isStreaming = false
-          break
-        }
+      // 今日十神
+      const todayTenGod = dayMaster === dailyGan ? '日主' : getTenGod(dayMaster, dailyGan)
 
-        if (chunk.content) {
-          state.streamedText += chunk.content
+      // ★ 收集所有命中的神煞名
+      const allShenShaNames: string[] = []
+      for (const pillar of chart.pillars) {
+        for (const ss of pillar.shenSha) {
+          allShenShaNames.push(ss.name)
         }
       }
-    } catch (err: any) {
-      if (err?.name === 'AbortError') {
-        state.error = null // 用户主动取消
-      } else {
-        state.error = err?.message || '未知错误'
+
+      // ★ 流日动态模板：五行生克 + 神煞维度分 + 十神偏移 → clamp 53-85
+      const { fortune, dimScores } = buildDailyFortune(daily.ganZhi, todayTenGod, dayMaster, dailyGan, allShenShaNames)
+
+      // ★ 每维评分逻辑说明
+      const dimExplanations = buildDimExplanations(allShenShaNames, todayTenGod)
+
+      // ★ 神煞聚合 2-3 条行动指引
+      const shenshaAdvice = generateShenshaSummary(allShenShaNames, todayTenGod)
+
+      // 收集神煞详情（去重）
+
+      // 收集神煞详情（去重）
+      const seen = new Set<string>()
+      const shenshaDetails: { name: string; shortMeaning: string; dailyGuide: string }[] = []
+      for (const pillar of chart.pillars) {
+        for (const ss of pillar.shenSha) {
+          if (seen.has(ss.name)) continue
+          seen.add(ss.name)
+          const full = getShenshaFull(ss.name)
+          shenshaDetails.push({
+            name: ss.name,
+            shortMeaning: full.shortMeaning,
+            dailyGuide: full.dailyGuide,
+          })
+        }
       }
-      state.isLoading = false
-      state.isStreaming = false
-      return
-    }
 
-    // 7. 完成后提取评分（从流式文本中尝试提取能量指数）
-    extractScore()
-    state.isLoading = false
-    state.isStreaming = false
-  }
+      // 生克关系描述
+      const relationDesc = buildRelationDesc(dayMaster, dailyGan, dailyZhi, todayTenGod)
 
-  /**
-   * 取消正在进行的请求
-   */
-  function cancel(): void {
-    if (abortController) {
-      abortController.abort()
-      abortController = null
-    }
-    state.isLoading = false
-    state.isStreaming = false
-  }
-
-  /**
-   * 从流式文本中提取运势评分
-   */
-  function extractScore(): void {
-    const text = state.streamedText
-    // 尝试匹配 "能量指数" 后面的数字
-    const scoreRegex = /能量指数[：:]\s*(\d{1,3})/i
-    const match = text.match(scoreRegex)
-    if (match) {
-      const score = parseInt(match[1], 10)
-      state.fortuneScore = Math.max(1, Math.min(100, score))
-      state.scoreLabel = score >= 80 ? '大吉' : score >= 60 ? '吉' : score >= 40 ? '平' : score >= 20 ? '注意' : '调整'
-    } else {
-      // 随机一个温和的默认值
-      state.fortuneScore = 50 + Math.floor(Math.random() * 30)
-      state.scoreLabel = '参考'
+      state.result = {
+        dailyGanZhi: daily.ganZhi,
+        todayTenGod,
+        fortune,
+        wuxingEnergy,
+        shenshaDetails,
+        shenshaAdvice,
+        relationDesc,
+        dimScores,
+        dimExplanations,
+      }
+      state.computed = true
+      state.error = null
+    } catch (e: any) {
+      state.error = e.message || '运势计算失败'
+      state.result = null
     }
   }
 
-  /** 清除运势缓存 */
-  function clearFortune(): void {
-    state.streamedText = ''
+  function clearResult(): void {
+    state.result = null
+    state.computed = false
     state.error = null
-    state.fortuneScore = 50
-    state.scoreLabel = ''
-    state.dailyGanZhi = ''
   }
 
-  return {
-    ...toRefs(state),
-    calculate,
-    cancel,
-    clearFortune,
+  return { ...toRefs(state), calculate, clearResult }
+}
+
+// ===== 辅助 =====
+
+function buildRelationDesc(
+  dayMaster: HeavenlyStem,
+  dailyGan: HeavenlyStem,
+  dailyZhi: string,
+  todayTenGod: string,
+): string {
+  const desc: Record<string, string> = {
+    '比肩': '今日干支与日主五行相同、阴阳一致，是和自我能量同频共振的一天。适合独立行动和自我确认。',
+    '劫财': '今日干支与日主五行相同但阴阳相反，社交和合作能量较强，但需注意财务支出。',
+    '食神': '日主生出今日天干（同阴阳），创造力与才华自然流淌，是适合表达和享受的日子。',
+    '伤官': '日主生出今日天干（异阴阳），思维活跃且锋芒毕露，注意语言表达的分寸。',
+    '正财': '日主克制今日天干（异阴阳），对财富和价值的掌控感增强，是务实求财的好日子。',
+    '偏财': '日主克制今日天干（同阴阳），意外之财和投资机会浮现，灵活应变能抓住好运。',
+    '正官': '今日天干克制日主（异阴阳），责任感和自律性增强，适合接受挑战和展示专业。',
+    '七杀': '今日天干克制日主（同阴阳），压力即动力——面对挑战时展现你的韧性和果敢。',
+    '正印': '今日天干生出日主（异阴阳），贵人运和学习力提升，适合获取知识和寻求指导。',
+    '偏印': '今日天干生出日主（同阴阳），深度思考与独立研究的好时机，深入的洞察将浮现。',
+    '日主': '今日干支与日主相同，是最"自我"的一天。适合回归内心，确认自己的方向。',
   }
+  return desc[todayTenGod] || `今日十神为${todayTenGod}，是与自己命格特殊互动的一天。`
 }

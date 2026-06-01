@@ -4,5 +4,4 @@
 
 export * from './bazi'
 export * from './shensha'
-export * from './config'
 export * from './fortune'

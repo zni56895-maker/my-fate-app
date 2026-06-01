@@ -1,7 +1,6 @@
+# 排除依赖库和构建产物
 node_modules/
 dist/
-.DS_Store
-*.local
-
-# 取消忽略 dist（Gitee Pages 需要）
-!dist/
+# 排除小程序编译生成的临时文件
+miniprogram/
+# 如果有其他大型文件夹也可以一并加入
