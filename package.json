@@ -12,6 +12,7 @@
     "@iconify/vue": "^5.0.1",
     "echarts": "^5.5.0",
     "lunar-javascript": "^1.6.12",
+    "pinia": "^3.0.4",
     "vue": "^3.4.0"
   },
   "devDependencies": {

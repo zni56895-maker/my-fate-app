@@ -4,14 +4,173 @@
  * 算法流程：摇卦→排卦→定世应→安六亲→装六兽→断吉凶
  */
 
-import type { HeavenlyStem, EarthlyBranch } from '@/types/bazi'
+import type { HeavenlyStem, EarthlyBranch, WuXingElement } from '@/types/bazi'
+import type { WuXingEnergyMap } from '@/types/fortune'
+import { STEM_WUXING } from '@/constants/stems'
 import { Solar } from 'lunar-javascript'
 import { GUACI_64, YAO_DIZHI, GONG_GUA, getLiuQin, getLiuShouOrder, type GuaEntry64 } from '@/constants/liuyao-dict'
 import { getDuanYu, GUA_JIXIONG, type DuanYuEntry } from '@/constants/liuyao-guaci'
+import { findDuanYu } from '@/data/divinationKnowledge'
 
 // ===== 类型 =====
 
 export type YongShenStrength = '旺相' | '休囚' | '中和'
+
+export interface LiuyaoBaziContext {
+  dayMaster?: HeavenlyStem
+  dayMasterWuXing?: WuXingElement
+  favorableElement?: WuXingElement
+  wuxingData?: WuXingEnergyMap
+}
+
+export type LiuyaoCategory = '综合' | '财运' | '事业' | '健康' | '学业' | '感情缘分' | '寻物' | '事业求职'
+
+export interface CategoryFocusRule {
+  primary: string
+  focus: string
+  yongShen?: string
+  preferredBook?: string
+  liushouWeights?: Record<string, number>
+  specialStates?: string[]
+}
+
+const CATEGORY_FOCUS: Record<string, CategoryFocusRule> = {
+  '财运': {
+    primary: '妻财爻',
+    focus: '财星强弱/动变',
+    yongShen: '妻财',
+    preferredBook: '增删卜易',
+    liushouWeights: { '青龙': 8, '朱雀': 2, '玄武': -2, '勾陈': -2, '螣蛇': 0, '白虎': -4 },
+    specialStates: ['旺相', '持世', '被兄弟克', '空亡', '动化进神', '临青龙'],
+  },
+  '事业': {
+    primary: '官鬼爻',
+    focus: '官星/世应关系',
+    yongShen: '官鬼',
+    preferredBook: '卜筮正宗',
+    liushouWeights: { '青龙': 6, '朱雀': 6, '玄武': -2, '勾陈': 2, '螣蛇': -1, '白虎': -6 },
+    specialStates: ['旺相', '持世', '生世', '被克', '世应相合', '世应相冲'],
+  },
+  '健康': {
+    primary: '子孙爻/官鬼爻',
+    focus: '用神生克/月建旺衰',
+    yongShen: '子孙',
+    preferredBook: '增删卜易',
+    liushouWeights: { '青龙': 2, '朱雀': 0, '玄武': -2, '勾陈': 0, '螣蛇': 0, '白虎': -10 },
+    specialStates: ['旺相', '休囚', '被克', '空亡', '临白虎'],
+  },
+}
+
+const DEFAULT_CATEGORY_RULE: CategoryFocusRule = {
+  primary: '用神',
+  focus: '综合断语',
+  preferredBook: '增删卜易',
+  liushouWeights: {},
+}
+
+function normalizeCategory(questionType?: string, category?: string): string {
+  if (category && CATEGORY_FOCUS[category]) return category
+  if (questionType === '事业求职') return '事业'
+  if (questionType === '财运') return '财运'
+  if (questionType === '健康') return '健康'
+  if (questionType === '学业') return '学业'
+  if (questionType === '感情缘分') return '感情缘分'
+  return category || questionType || '综合'
+}
+
+function getActionableAdvice(category: string, rule: CategoryFocusRule, yongShenStrength?: string, questionType?: string): string {
+  const strengthKey = yongShenStrength === '旺相' ? '旺相' : yongShenStrength === '休囚' ? '休囚' : '中和'
+  const adviceKey = (typeof questionType === 'string' && questionType) ? questionType : category
+  const adviceMap: Record<string, Record<'旺相' | '休囚' | '中和', string>> = {
+    综合: {
+      旺相: '整体状态不错，先抓最重要的事：把今天的关键任务做完，再处理次要琐事；有风险的决定尽量放到明天再确认一次。',
+      休囚: '最近整体节奏偏弱，先把计划缩小到一两件最重要的事，减少临时决策和额外消耗，先稳住基本盘。',
+      中和: '整体处于可推进状态，建议先排优先级：必须做、可以延后、可以放弃三类分开处理。',
+    },
+    财运: {
+      旺相: '先做回款和收款，清掉欠款、报销、退款；大额支出先缓一缓，能省就省。',
+      休囚: '先守现金流，停掉冲动消费和高风险投入；优先做兼职、催款、降本。',
+      中和: '先列出收入、支出、欠款三张清单；本周只做低风险、可快速结算的事。',
+    },
+    事业求职: {
+      旺相: '趁状态好，优先推进沟通、投递和面试；简历突出结果和可量化成绩，面试时直接讲你能解决什么问题。',
+      休囚: '先把简历和作品集补齐，少海投，多针对岗位优化；面试里少讲情绪，多讲案例和稳定性。',
+      中和: '先整理目标岗位清单，做 2-3 版简历，提前准备自我介绍、离职原因和常见问题答案。',
+    },
+    事业: {
+      旺相: '趁状态好，优先推进沟通、投递和面试；简历突出结果和可量化成绩，面试时直接讲你能解决什么问题。',
+      休囚: '先把简历和作品集补齐，少海投，多针对岗位优化；面试里少讲情绪，多讲案例和稳定性。',
+      中和: '先整理目标岗位清单，做 2-3 版简历，提前准备自我介绍、离职原因和常见问题答案。',
+    },
+    感情缘分: {
+      旺相: '可以主动一点，但别急着定结论；多用轻松、具体的话题聊天，观察对方是否愿意持续回应。',
+      休囚: '先别追着推进关系，给彼此一点空间；少试探、多倾听，避免翻旧账和情绪化表达。',
+      中和: '把重心放在稳定沟通上，少猜、多确认；约会和聊天都保持自然节奏，不要一下子加太多压力。',
+    },
+    学业: {
+      旺相: '趁专注度高，直接攻重点章节和高频考点；用“做题-复盘-纠错”循环，效率会更高。',
+      休囚: '先降噪再学习，缩短单次学习时长，改成番茄钟；先补基础概念，再碰难题。',
+      中和: '把学习拆成小块，每天固定时间复盘，优先抓薄弱章节和错题本，不要平均用力。',
+    },
+    健康: {
+      旺相: '适合趁现在把作息拉回正轨：早睡一点、清淡一点、动起来；如果不舒服持续存在，尽早就医确认。',
+      休囚: '先别硬扛，优先补睡眠、少熬夜、少冰冷油腻；身体信号明显时，不要拖着不检查。',
+      中和: '先做基础调整：规律睡眠、正常吃饭、每天轻运动 20-30 分钟；观察一周再看变化。',
+    },
+  }
+
+  return adviceMap[adviceKey]?.[strengthKey] || `该类问题优先观察「${rule.focus}」，并结合${rule.primary}与世应关系判断。`
+}
+
+function getCategoryDuanYu(
+  category: string,
+  guaName: string,
+  yongShen: string,
+  yongShenYao: number,
+  shiYao: number,
+  dongYaoCount: number,
+  yongShenStrength?: string,
+  preferBook?: string,
+  questionType?: string,
+): DuanYuEntry {
+  const rule = CATEGORY_FOCUS[category] || DEFAULT_CATEGORY_RULE
+  const stateCandidates = [
+    yongShenYao === shiYao ? '持世' : '',
+    yongShenStrength === '旺相' ? '旺相' : '',
+    yongShenStrength === '休囚' ? '休囚' : '',
+  ].filter(Boolean) as string[]
+
+  for (const state of stateCandidates) {
+    const found = findDuanYu(yongShen, state, preferBook || rule.preferredBook || '增删卜易')
+    if (found) {
+      return {
+        level: state === '旺相' || state === '持世' ? '吉' : '平',
+        classicalText: `${found.text}（${found.source}）`,
+        modernInterpretation: found.desc,
+        professionalAdvice: getActionableAdvice(category, rule, yongShenStrength, questionType),
+      }
+    }
+  }
+
+  const fallback = getDuanYu(guaName, yongShen, yongShenYao, shiYao, dongYaoCount, yongShenStrength)
+  return {
+    ...fallback,
+    professionalAdvice: getActionableAdvice(category, rule, yongShenStrength, questionType),
+  }
+}
+
+export interface YongShenAnalysis {
+  title: string
+  yongShen: string
+  targetYao: number
+  strength: YongShenStrength
+  score: number
+  liushou: string
+  summary: string
+  detail: string
+  advice: string
+  baziHint: string
+}
 
 export interface YaoLine {
   index: number         // 1-6（初爻=1, 上爻=6）
@@ -40,6 +199,8 @@ export interface LiuyaoPan {
   duanYu: DuanYuEntry   // 断语
   specialAdvice?: string // 专项断语
   careerTiming?: string   // ★ 求职应期
+  questionType: string     // ★ 问事分类上下文
+  baziContext?: LiuyaoBaziContext // ★ 八字命理上下文
 }
 
 // ===== 摇卦 =====
@@ -93,11 +254,25 @@ function yaoListToGua(yaoValues: number[]): string {
 
 // ===== 主入口 =====
 
-export function calcLiuyao(dayGan: string, questionType?: string, lostScene?: string, lostDateStr?: string, marriageGender?: string, marriageGoal?: string, careerStatus?: string): LiuyaoPan {
+export function calcLiuyao(
+  dayGan: string,
+  questionType?: string,
+  lostScene?: string,
+  lostDateStr?: string,
+  marriageGender?: string,
+  marriageGoal?: string,
+  careerStatus?: string,
+  baziContext?: LiuyaoBaziContext,
+  fixedCoins?: number[][],
+  category?: string,
+): LiuyaoPan {
+  const qt = typeof questionType === 'string' ? questionType : ''
   // ★ 更新性别状态（给用神函数使用）
   _marriageGender = marriageGender || '男'
+  const normalizedCategory = normalizeCategory(qt, category)
+  const categoryRule = CATEGORY_FOCUS[normalizedCategory] || DEFAULT_CATEGORY_RULE
 
-  const coins = shakeSixTimes()
+  const coins = fixedCoins && fixedCoins.length === 6 ? fixedCoins : shakeSixTimes()
 
   // 六次结果
   const sums = coins.map(c => c[0] + c[1] + c[2])
@@ -147,7 +322,9 @@ export function calcLiuyao(dayGan: string, questionType?: string, lostScene?: st
 
   // ★ 《增删卜易》用神映射表 — 按问事类型强制固定用神
   let yongShenFixed: string
-  if (questionType === '事业求职') { yongShenFixed = '官鬼' }
+  if (categoryRule.yongShen) {
+    yongShenFixed = categoryRule.yongShen
+  } else if (questionType === '事业求职') { yongShenFixed = '官鬼' }
   else if (questionType === '财运') { yongShenFixed = '妻财' }
   else if (questionType === '健康') { yongShenFixed = '子孙' }
   else {
@@ -167,7 +344,9 @@ export function calcLiuyao(dayGan: string, questionType?: string, lostScene?: st
 
   // ★ 用神旺衰量化得分（旺相=80-95 / 中和=60-70 / 休囚=35-50）
   const strengthToScore: Record<string, number> = { '旺相': 85, '中和': 65, '休囚': 42 }
-  const yongShenScore = strengthToScore[yongShenStrength] || 60
+  const categoryScoreBonus = categoryRule.liushouWeights?.[yongShenYaoData?.liushou || ''] || 0
+  const baziBonus = 0
+  const yongShenScore = Math.min(99, Math.max(20, (strengthToScore[yongShenStrength] || 60) + baziBonus + Math.round(categoryScoreBonus / 2)))
 
   // ★ 六神加权修正
   const liuShouWx: Record<string, number> = {
@@ -180,13 +359,14 @@ export function calcLiuyao(dayGan: string, questionType?: string, lostScene?: st
   }
   let liushouScore = 0
   const yongShenYaoLiushou = yongShenYaoData?.liushou || ''
-  liushouScore = liuShouWx[yongShenYaoLiushou] || 0
+  const baseLiushouScore = liuShouWx[yongShenYaoLiushou] || 0
+  liushouScore = baseLiushouScore + (categoryRule.liushouWeights?.[yongShenYaoLiushou] || 0)
 
   // ★ 古籍溯源文案
-  const source = buildYongShenSource(questionType || '', yongShenFixed, yongShenStrength, yongShenYaoLiushou, yongShenYaoData)
+  const source = buildYongShenSource(normalizedCategory, yongShenFixed, yongShenStrength, yongShenYaoLiushou, yongShenYaoData)
 
   // 断语
-  const duanYu = getDuanYu(benGuaName, yongShenFixed, yongShenYao, benGua.shi, dongCount, yongShenStrength)
+  const duanYu = getCategoryDuanYu(normalizedCategory, benGuaName, yongShenFixed, yongShenYao, benGua.shi, dongCount, yongShenStrength, categoryRule.preferredBook, questionType)
 
   // ★ 专项判定
   let specialAdvice: string | undefined
@@ -263,23 +443,24 @@ function buildYongShenSource(
   liushouName: string,
   yongShenYao?: YaoLine,
 ): string {
+  const qType = (typeof questionType === 'string') ? questionType : '综合';
   const inline: string[] = ['《增删卜易》']
 
   // 用神
-  if (questionType === '事业求职') inline.push('官鬼为用神 — "凡占功名，以官鬼为用神"')
-  else if (questionType === '财运') inline.push('妻财为用神 — "凡占财，以财爻为用神。财旺持世，求财必得"')
-  else if (questionType === '健康') inline.push('子孙为用神 — "凡占疾病，以子孙为用药"')
-  else if (questionType === '感情缘分') inline.push(yongShen === '妻财' ? '妻财为用神 — "男占婚财为用"' : '官鬼为用神 — "女占婚官鬼为用"')
-  else if (questionType.startsWith('寻物')) inline.push(yongShen === '父母' ? '父母为用神 — "凡占失物，以父母为用"' : '子孙为用神 — "凡占走失，以子孙为用"')
+  if (qType === '事业求职' || qType === '事业') inline.push('官鬼为用神 — "凡占功名，以官鬼为用神"')
+  else if (qType === '财运') inline.push('妻财为用神 — "凡占财，以财爻为用神。财旺持世，求财必得"')
+  else if (qType === '健康') inline.push('子孙为用神 — "凡占疾病，以子孙为用药"')
+  else if (qType === '感情缘分') inline.push(yongShen === '妻财' ? '妻财为用神 — "男占婚财为用"' : '官鬼为用神 — "女占婚官鬼为用"')
+  else if (qType.startsWith('寻物')) inline.push(yongShen === '父母' ? '父母为用神 — "凡占失物，以父母为用"' : '子孙为用神 — "凡占走失，以子孙为用"')
 
   // 旺衰
   if (strength === '旺相') inline.push('用神旺相 — "旺相逢生，诸事亨通"')
   else if (strength === '休囚') inline.push('用神休囚 — "休囚受克，事难成就"')
 
   // 六神
-  if (liushouName === '青龙' && (questionType === '财运' || questionType === '事业求职')) inline.push('青龙临用神 — "青龙最吉，财运官运皆主亨通"')
-  if (liushouName === '白虎' && questionType === '健康') inline.push('白虎临用神 — "白虎主血光，占病大忌"')
-  if (liushouName === '朱雀' && questionType === '事业求职') inline.push('朱雀临官 — "朱雀临官，主口舌文书"')
+  if ((liushouName === '青龙') && (qType === '财运' || qType === '事业求职' || qType === '事业')) inline.push('青龙临用神 — "青龙最吉，财运官运皆主亨通"')
+  if (liushouName === '白虎' && qType === '健康') inline.push('白虎临用神 — "白虎主血光，占病大忌"')
+  if ((liushouName === '朱雀') && (qType === '事业求职' || qType === '事业')) inline.push('朱雀临官 — "朱雀临官，主口舌文书"')
 
   return inline.join('；')
 }

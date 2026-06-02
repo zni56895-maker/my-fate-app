@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useBazi } from '@/composables/useBazi'
+import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useBaziStore } from '@/stores/useBaziStore'
 import { useFortune } from '@/composables/useFortune'
 
 import HexagramBg from '@/components/shared/HexagramBg.vue'
@@ -20,11 +21,28 @@ import SearchLostItem from '@/pages/SearchLostItem.vue'
 
 const activeTab = ref<'bazi' | 'fortune' | 'liuyao' | 'search'>('bazi')
 
-const { birthInfo, baziData: baziChart, baziError, baziComputed, yunData, wuxingData, updateBirthInfo } = useBazi()
+const baziStore = useBaziStore()
+const { baziData: baziChart, baziError, baziComputed, yunData, wuxingData } = storeToRefs(baziStore)
 const { result: fortuneResult, computed: fortuneComputed, error: fortuneError, calculate: calcFortune } = useFortune()
+
+onMounted(() => {
+  baziStore.init()
+})
 
 const fortuneScore = computed(() => (fortuneResult as any)?.fortune?.energy ?? 50)
 const scoreLabel = computed(() => (fortuneResult as any)?.fortune?.theme ?? '')
+const activeShensha = computed(() =>
+  baziChart.value?.pillars.flatMap((p: any) =>
+    p.shenSha.map((s: any) => ({ ...s, rarity: s.rarity || '10%' })),
+  ) || [],
+)
+const allShenSha = computed(() => {
+  if (!baziChart.value) return {}
+  return baziChart.value.pillars.reduce((acc: any, p: any, i: number) => {
+    acc[i] = p.shenSha
+    return acc
+  }, {})
+})
 
 function handleCalculateFortune(): void {
   if (!baziChart.value) return
@@ -43,7 +61,7 @@ function handleCalculateFortune(): void {
     <main class="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full space-y-5 md:space-y-6 relative z-10">
       <!-- ===== Tab 1: 我的八字盘面 ===== -->
       <div v-if="activeTab === 'bazi'">
-        <BirthForm :birth-info="birthInfo" @update:birth-info="(info: any) => { for (const key of Object.keys(info) as any[]) updateBirthInfo(key, info[key]) }" />
+        <BirthForm />
         <div v-if="baziError" class="card-cosmic p-4 text-center mt-4"><p class="text-cosmic-danger text-sm">{{ baziError }}</p></div>
         <div v-if="baziComputed && baziChart" class="space-y-5 mt-4">
           <div class="text-center">
@@ -55,9 +73,9 @@ function handleCalculateFortune(): void {
           </div>
           <PillarGrid :pillars="baziChart.pillars" />
           <!-- ★ 稀有神煞 + 六维图谱 ★ -->
-          <ShenShaChart :active-shensha="baziChart.pillars.flatMap((p: any) => p.shenSha.map((s: any) => ({ ...s, rarity: s.rarity || '10%' })))" />
+          <ShenShaChart :active-shensha="activeShensha" />
           <!-- ★ 神煞Bento Grid ★ -->
-          <ShenShaBentoGrid :all-shen-sha="baziChart.pillars.reduce((acc: any, p: any, i: number) => { acc[i] = p.shenSha; return acc }, {})" />
+          <ShenShaBentoGrid :all-shen-sha="allShenSha" />
           <div class="flex justify-center gap-4 text-xs text-slate-500">
             <span>胎元：{{ baziChart.taiYuan }}</span><span>命宫：{{ baziChart.mingGong }}</span><span>身宫：{{ baziChart.shenGong }}</span>
           </div>

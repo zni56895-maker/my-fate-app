@@ -27,10 +27,11 @@ const questionTypes = [
   '综合', '事业求职', '感情缘分', '财运', '学业', '健康',
 ]
 
-function doQuickGua(): void {
+function doQuickGua(category = questionType.value): void {
   pan.value = calcLiuyao(
     '甲', questionType.value, 'indoor', new Date().toISOString().slice(0, 10),
     marriageGender.value, marriageGoal.value, careerStatus.value,
+    undefined, undefined, category,
   )
 }
 
@@ -52,6 +53,7 @@ function shakeManual(): void {
       pan.value = calcLiuyao(
         '甲', questionType.value, 'indoor', new Date().toISOString().slice(0, 10),
         marriageGender.value, marriageGoal.value, careerStatus.value,
+        undefined, allCoins, questionType.value,
       )
     }
   }, 500)

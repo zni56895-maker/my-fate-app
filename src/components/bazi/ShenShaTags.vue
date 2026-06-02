@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { ShenShaResult } from '@/types/bazi'
 import { IS_BASIC } from '@/constants/fortuneDatabase'
 import TagBadge from '@/components/shared/TagBadge.vue'
@@ -11,8 +11,8 @@ const props = defineProps<{
 const showAll = ref(false)
 
 const isBasic = (name: string) => IS_BASIC.has(name)
-const basicList = props.shenShaList.filter(s => isBasic(s.name))
-const extraList = props.shenShaList.filter(s => !isBasic(s.name))
+const basicList = computed(() => props.shenShaList.filter(s => isBasic(s.name)))
+const extraList = computed(() => props.shenShaList.filter(s => !isBasic(s.name)))
 </script>
 
 <template>

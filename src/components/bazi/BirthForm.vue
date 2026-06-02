@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import type { BirthInfo, Gender } from '@/types/bazi'
+import { useBaziStore } from '@/stores/useBaziStore'
 
-const props = defineProps<{
-  birthInfo: BirthInfo
-}>()
-
-const emit = defineEmits<{
-  'update:birthInfo': [info: BirthInfo]
-}>()
+const baziStore = useBaziStore()
 
 function update<K extends keyof BirthInfo>(key: K, value: BirthInfo[K]): void {
-  emit('update:birthInfo', { ...props.birthInfo, [key]: value })
+  baziStore.updateBirthInfo(key, value)
 }
 
 // 生成年份选项（1900~当前年份）
@@ -32,7 +27,7 @@ const hourOptions = Array.from({ length: 24 }, (_, i) => i)
       <div>
         <label class="block text-xs text-cosmic-muted mb-1">年份</label>
         <select
-          :value="birthInfo.year"
+          :value="baziStore.birthInfo.year"
           @change="update('year', Number(($event.target as HTMLSelectElement).value))"
           class="select-cosmic text-sm"
         >
@@ -44,7 +39,7 @@ const hourOptions = Array.from({ length: 24 }, (_, i) => i)
       <div>
         <label class="block text-xs text-cosmic-muted mb-1">月份</label>
         <select
-          :value="birthInfo.month"
+          :value="baziStore.birthInfo.month"
           @change="update('month', Number(($event.target as HTMLSelectElement).value))"
           class="select-cosmic text-sm"
         >
@@ -56,7 +51,7 @@ const hourOptions = Array.from({ length: 24 }, (_, i) => i)
       <div>
         <label class="block text-xs text-cosmic-muted mb-1">日期</label>
         <select
-          :value="birthInfo.day"
+          :value="baziStore.birthInfo.day"
           @change="update('day', Number(($event.target as HTMLSelectElement).value))"
           class="select-cosmic text-sm"
         >
@@ -68,7 +63,7 @@ const hourOptions = Array.from({ length: 24 }, (_, i) => i)
       <div>
         <label class="block text-xs text-cosmic-muted mb-1">时间（0-23时）</label>
         <select
-          :value="birthInfo.hour"
+          :value="baziStore.birthInfo.hour"
           @change="update('hour', Number(($event.target as HTMLSelectElement).value))"
           class="select-cosmic text-sm"
         >
@@ -91,7 +86,7 @@ const hourOptions = Array.from({ length: 24 }, (_, i) => i)
             @click="update('gender', g.value)"
             :class="[
               'flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300',
-              birthInfo.gender === g.value
+              baziStore.birthInfo.gender === g.value
                 ? 'bg-cosmic-accent text-white shadow-glow'
                 : 'bg-cosmic-bg border border-cosmic-border text-cosmic-muted hover:border-cosmic-accent',
             ]"
