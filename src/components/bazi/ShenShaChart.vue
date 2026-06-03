@@ -116,19 +116,16 @@ const dimSvg: Record<string,string> = {
   <div class="flex flex-col gap-6">
     <!-- 第一幕 · 天枢 -->
     <div v-if="displayShensha.length > 0" class="flex flex-col gap-3">
-      <h3 class="text-xs font-light tracking-widest text-amber-400/60">天枢 · 核心天赋</h3>
+      <h3 class="text-xs font-light tracking-widest text-purple-300/60">天枢 · 核心天赋</h3>
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div v-for="(item, idx) in displayShensha" :key="item.name"
-          class="rounded-sm p-[1px] transition-all duration-500 group"
-          :style="{
-            background: 'linear-gradient(135deg, ' + shenshaHex(talentColor[item.name]||'text-shensha-nobility') + '40, transparent)',
-            animation: `rise 0.5s cubic-bezier(0.16,1,0.3,1) ${idx*120}ms both`
-          }">
-          <div class="flex items-start gap-2.5 px-3 py-3 rounded-sm bg-gradient-to-br from-purple-800/8 via-purple-900/12 to-transparent backdrop-blur-2xl backdrop-saturate-150 transition-all duration-500 group-hover:from-purple-700/12 group-hover:via-purple-800/20" :style="{ border: '1px solid rgba(168,85,247,.2)', boxShadow: '0 0 10px rgba(168,85,247,.15), 0 4px 20px rgba(0,0,0,.35)' }">
-            <svg viewBox="0 0 12 12" class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1" :style="{ color: shenshaHex(talentColor[item.name]||'text-shensha-nobility'), filter: 'drop-shadow(0 0 6px ' + shenshaHex(talentColor[item.name]||'text-shensha-nobility') + '60)' }"><polygon points="6,1 7.5,4 10.5,4.5 8.5,6.5 9,9.5 6,8 3,9.5 3.5,6.5 1.5,4.5 4.5,4"/></svg>
+          class="rounded-sm transition-all duration-500 group"
+          :style="{ animation: `rise 0.5s cubic-bezier(0.16,1,0.3,1) ${idx*120}ms both` }">
+          <div class="flex items-start gap-2.5 px-4 py-3 rounded-sm bg-purple-900/20 backdrop-blur-md transition-all duration-500 group-hover:bg-purple-900/30" :style="{ border: '1px solid rgba(168,85,247,.5)', boxShadow: '0 0 12px rgba(168,85,247,.2), 0 4px 20px rgba(0,0,0,.3)' }">
+            <svg viewBox="0 0 12 12" class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="1" style="color:#c4b5fd;filter:drop-shadow(0 0 4px rgba(168,85,247,.4))"><polygon points="6,1 7.5,4 10.5,4.5 8.5,6.5 9,9.5 6,8 3,9.5 3.5,6.5 1.5,4.5 4.5,4"/></svg>
             <div>
-              <div class="text-sm font-medium tracking-wider transition-all duration-300 group-hover:text-white" :class="talentColor[item.name]||'text-amber-200/90'">{{ item.name }}</div>
-              <div class="text-xs text-slate-400 mt-0.5 tracking-wide">{{ getBrief(item.name) }}</div>
+              <div class="text-sm font-medium tracking-wider text-purple-200 transition-all duration-300 group-hover:text-purple-100">{{ item.name }}</div>
+              <div class="text-xs text-purple-300/60 mt-0.5 tracking-wide">{{ getBrief(item.name) }}</div>
             </div>
           </div>
         </div>

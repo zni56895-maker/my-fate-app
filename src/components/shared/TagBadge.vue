@@ -7,16 +7,10 @@ const props = withDefaults(defineProps<{
 }>(), {
   type: '中性',
 })
-
-const typeClass: Record<JiXiong, string> = {
-  '吉': 'text-polarity-auspicious',
-  '凶': 'text-polarity-inauspicious',
-  '中性': 'text-polarity-neutral',
-}
 </script>
 
 <template>
-  <span :class="[typeClass[type], 'text-xs transition-all duration-300 hover:text-white lowercase cursor-default']">
+  <span class="text-purple-200/70 text-xs transition-all duration-300 hover:text-purple-200 hover:drop-shadow-[0_0_6px_rgba(168,85,247,0.4)] lowercase cursor-default">
     {{ name }}
   </span>
 </template>

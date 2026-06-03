@@ -29,7 +29,7 @@ const extraList = computed(() => props.shenShaList.filter(s => !isBasic(s.name))
       <span
         v-for="ss in extraList"
         :key="ss.name"
-        class="text-white/70 text-xs"
+        class="text-purple-200/70 text-xs"
       >
         {{ ss.name }}
       </span>
@@ -38,12 +38,12 @@ const extraList = computed(() => props.shenShaList.filter(s => !isBasic(s.name))
     <button
       v-if="extraList.length > 0"
       @click="showAll = !showAll"
-      class="text-xs text-white/40 hover:text-white/70 transition-colors"
+      class="text-xs text-purple-200/40 hover:text-purple-200/80 transition-colors"
     >
       {{ showAll ? '−' : `+${extraList.length}` }}
     </button>
   </div>
-  <div v-else class="text-center text-xs text-white/40">
+  <div v-else class="text-center text-xs text-purple-200/40">
     无特殊神煞
   </div>
 </template>
