@@ -51,7 +51,7 @@ function handleCalculateFortune(): void {
 </script>
 
 <template>
-  <div class="star-bg min-h-screen flex flex-col relative">
+  <div class="star-bg min-h-screen flex flex-col relative" style="background: radial-gradient(ellipse at center, #0f172a 0%, #000000 100%);">
     <!-- 六芒星背景 -->
     <HexagramBg />
 
@@ -65,10 +65,11 @@ function handleCalculateFortune(): void {
         <div v-if="baziError" class="card-cosmic p-4 text-center mt-4"><p class="text-cosmic-danger text-sm">{{ baziError }}</p></div>
         <div v-if="baziComputed && baziChart" class="space-y-5 mt-4">
           <div class="text-center">
-            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 border border-purple-500/20">
-              <span class="text-sm text-slate-400">日主</span>
-              <span class="text-xl font-bold text-purple-300">{{ baziChart.dayMaster }}</span>
-              <span class="text-xs text-slate-500">(命主本人)</span>
+            <span class="inline-flex items-center gap-2 px-5 py-2 rounded-xl backdrop-blur-md transition-all duration-300"
+              :style="{ background: 'rgba(18,18,42,0.85)', border: '0.5px solid rgba(129,140,248,0.2)', boxShadow: '0 0 20px rgba(129,140,248,0.06)' }">
+              <span class="text-xs font-extralight tracking-widest" style="color:#818cf8">日主</span>
+              <span class="text-xl font-extralight tracking-widest" style="background:linear-gradient(135deg,#818cf8,#2dd4bf);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">{{ baziChart.dayMaster }}</span>
+              <span class="text-xs font-extralight tracking-wider" style="color:rgba(129,140,248,0.35)">(命主本人)</span>
             </span>
           </div>
           <PillarGrid :pillars="baziChart.pillars" />
@@ -81,18 +82,16 @@ function handleCalculateFortune(): void {
           </div>
           <DaYunTimeline :da-yun-result="yunData" />
         </div>
-        <div v-if="!baziComputed && !baziError" class="backdrop-blur-lg bg-slate-900/40 border border-purple-500/20 rounded-2xl p-8 text-center mt-4">
-          <span class="text-5xl block mb-4">☯</span>
-          <p class="text-slate-400 text-lg">请选择出生信息，系统将自动排盘</p>
+        <div v-if="!baziComputed && !baziError" class="backdrop-blur-sm p-8 text-center mt-4" :style="{background:'rgba(255,255,255,0.015)',border:'0.5px solid rgba(255,255,255,0.06)'}">
+          <p class="text-white/30 font-light tracking-wider">请选择出生信息，系统将自动排盘</p>
         </div>
       </div>
 
       <!-- ===== Tab 2: 今日运势指南 ===== -->
       <div v-if="activeTab === 'fortune'">
-        <div v-if="!baziComputed || !baziChart" class="backdrop-blur-lg bg-slate-900/40 border border-purple-500/20 rounded-2xl p-8 text-center">
-          <span class="text-5xl block mb-4">🔮</span>
-          <p class="text-slate-400 text-lg">请先在「我的八字盘面」中完成排盘</p>
-          <button @click="activeTab = 'bazi'" class="btn-cosmic-outline mt-4 text-sm">📊 前往排盘</button>
+        <div v-if="!baziComputed || !baziChart" class="backdrop-blur-sm p-8 text-center" :style="{background:'rgba(255,255,255,0.015)',border:'0.5px solid rgba(255,255,255,0.06)'}">
+          <p class="text-white/30 font-light tracking-wider">请先在「我的八字盘面」中完成排盘</p>
+          <button @click="activeTab = 'bazi'" class="mt-4 text-xs text-white/30 hover:text-white/60 transition-colors outline-none tracking-wider">前往排盘</button>
         </div>
         <div v-else class="space-y-5">
           <!-- ★ fortune仪表盘 ★ -->
@@ -101,7 +100,7 @@ function handleCalculateFortune(): void {
           </template>
           <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="backdrop-blur-lg bg-slate-900/40 border border-purple-500/20 rounded-2xl p-4">
-              <h3 class="text-sm font-semibold text-purple-300 mb-2 text-center">🌀 五行能量分布</h3>
+              <h3 class="text-sm font-semibold text-purple-300 mb-2 text-center"><svg viewBox="0 0 16 16" class="w-4 h-4 inline text-white/30 align-middle mr-1" fill="none" stroke="currentColor" stroke-width="1"><circle cx="8" cy="8" r="5"/><path d="M8 3v2M8 11v2M3 8h2M11 8h2"/></svg> 五行能量分布</h3>
               <WuXingRadar :wuxing-data="wuxingData" height="280px" />
             </div>
             <div class="backdrop-blur-lg bg-slate-900/40 border border-purple-500/20 rounded-2xl p-4 flex items-center justify-center">
@@ -125,9 +124,9 @@ function handleCalculateFortune(): void {
       </div>
     </main>
 
-    <footer class="relative z-10 text-center py-4 text-slate-500 text-xs border-t border-purple-500/10">
-      <p>爻知方寸 · 纯本地计算 · 数据不上传 · 完全离线可用</p>
-      <p class="mt-1 opacity-60">八字排盘与运势测算仅供娱乐参考 · 相信自己的人生由自己掌控 ✨</p>
+    <footer class="relative z-10 text-center py-4 text-white/20 text-xs" style="border-top:0.5px solid rgba(255,255,255,0.04)">
+      <p class="font-extralight tracking-wider">爻知方寸 · 纯本地计算 · 数据不上传 · 完全离线可用</p>
+      <p class="mt-1 opacity-40 font-extralight text-[10px] tracking-wider">八字排盘与运势测算仅供娱乐参考 · 相信自己的人生由自己掌控</p>
     </footer>
   </div>
 </template>

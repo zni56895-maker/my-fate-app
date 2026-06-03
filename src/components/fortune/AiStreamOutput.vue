@@ -37,14 +37,14 @@ function renderMarkdown(text: string): string {
   <div class="card-cosmic p-4 md:p-6">
     <!-- 状态提示 -->
     <div v-if="!text && !isStreaming && !error" class="text-center py-8">
-      <span class="text-4xl block mb-3">🔮</span>
+      <span class="text-4xl block mb-3"><svg viewBox="0 0 16 16" class="w-12 h-12 mx-auto text-white/30" fill="none" stroke="currentColor" stroke-width="1"><polygon points="8,2 10,6 14,6.5 11,9.5 11.5,14 8,12 4.5,14 5,9.5 2,6.5 6,6.5"/></svg></span>
       <p class="text-cosmic-muted">完成排盘后，点击上方按钮即可获取 AI 运势解读</p>
       <p class="text-xs text-cosmic-muted mt-2">请先在右上角配置 API Key</p>
     </div>
 
     <!-- 错误提示 -->
     <div v-if="error" class="text-center py-4">
-      <span class="text-3xl block mb-2">⚠</span>
+      <span class="text-3xl block mb-2"><svg viewBox="0 0 16 16" class="w-8 h-8 mx-auto text-rose-400/60" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M5 5l6 6M11 5l-6 6"/></svg></span>
       <p class="text-cosmic-danger text-sm">{{ error }}</p>
     </div>
 

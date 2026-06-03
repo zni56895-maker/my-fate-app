@@ -88,8 +88,14 @@ function coinSvg(coin: number): string {
   <div class="space-y-5">
     <!-- 模式选择 -->
     <div class="flex gap-3 justify-center">
-      <button @click="mode='quick'" :class="mode==='quick'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2">⚡ 一键成卦</button>
-      <button @click="mode='manual'" :class="mode==='manual'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2">🎲 手动摇卦</button>
+      <button @click="mode='quick'" :class="mode==='quick'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2 inline-flex items-center gap-2">
+        <svg viewBox="0 0 16 16" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 1v3M8 12v3M1 8h3M12 8h3"/><path d="M3.5 3.5l2.5 2.5M10 10l2.5 2.5M3.5 12.5l2.5-2.5M10 6l2.5-2.5"/></svg>
+        一键成卦
+      </button>
+      <button @click="mode='manual'" :class="mode==='manual'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2 inline-flex items-center gap-2">
+        <svg viewBox="0 0 16 16" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>
+        手动摇卦
+      </button>
     </div>
 
     <!-- 问事类型 -->
@@ -136,7 +142,10 @@ function coinSvg(coin: number): string {
 
     <!-- 一键成卦 -->
     <div v-if="mode==='quick'" class="text-center">
-      <button @click="doQuickGua" class="btn-cosmic text-lg px-8 py-3 rounded-xl">🔮 起卦</button>
+      <button @click="doQuickGua" class="btn-cosmic text-lg px-8 py-3 rounded-xl inline-flex items-center gap-2">
+        <svg viewBox="0 0 16 16" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 2"/></svg>
+        起卦
+      </button>
     </div>
 
     <!-- 手动摇卦 -->
@@ -191,7 +200,9 @@ function coinSvg(coin: number): string {
         <div class="flex items-center justify-between mb-1">
           <div class="flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24] animate-pulse" />
-            <span class="text-xs font-bold text-amber-300 tracking-wider">⚖ 核心推演</span>
+            <span class="text-xs font-bold tracking-wider inline-flex items-center gap-1.5" :style="{ color: '#fbbf24' }">
+              <svg viewBox="0 0 16 16" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l2 4 4 .5-3 3 .5 4-3.5-2-3.5 2 .5-4-3-3 4-.5z"/></svg>
+              核心推演</span>
           </div>
           <span class="text-[9px] px-2 py-0.5 rounded-full border bg-amber-500/20 text-amber-400 border-amber-500/30 font-medium">AI 实时推演</span>
         </div>

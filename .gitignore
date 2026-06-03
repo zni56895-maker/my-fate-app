@@ -4,3 +4,9 @@ dist/
 # 排除小程序编译生成的临时文件
 miniprogram/
 # 如果有其他大型文件夹也可以一并加入
+
+# 安全与敏感信息
+.claude/
+.env
+*.bak
+skills-lock.json

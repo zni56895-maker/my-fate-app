@@ -8,28 +8,15 @@ const props = withDefaults(defineProps<{
   type: '中性',
 })
 
-const glowClass: Record<JiXiong, string> = {
-  '吉': 'tag-glow-ji',
-  '凶': 'tag-glow-xiong',
-  '中性': 'tag-glow-neutral',
-}
-
-const typeEmoji: Record<JiXiong, string> = {
-  '吉': '✨',
-  '凶': '⚡',
-  '中性': '🔮',
+const typeClass: Record<JiXiong, string> = {
+  '吉': 'text-polarity-auspicious',
+  '凶': 'text-polarity-inauspicious',
+  '中性': 'text-polarity-neutral',
 }
 </script>
 
 <template>
-  <span
-    :class="[
-      'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium',
-      'transition-all duration-300 hover:scale-105',
-      glowClass[type],
-    ]"
-  >
-    <span class="text-[10px]">{{ typeEmoji[type] }}</span>
+  <span :class="[typeClass[type], 'text-xs transition-all duration-300 hover:text-white lowercase cursor-default']">
     {{ name }}
   </span>
 </template>

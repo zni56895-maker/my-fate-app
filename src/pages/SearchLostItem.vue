@@ -151,19 +151,19 @@ function getDirectionHint(liushou: string, gong: string): string {
   <div class="w-full space-y-5">
     <!-- 时空背景 -->
     <div class="p-4 rounded-2xl bg-slate-900/40 border border-purple-500/20 backdrop-blur-lg text-xs text-slate-400 flex flex-wrap gap-4">
-      <span>📅 今日干支：{{ env.ganZhi }}</span>
-      <span>🌙 农历：{{ env.lunarMonth }}月{{ env.lunarDay }}</span>
+      <span><svg viewBox="0 0 16 16" class="w-3 h-3 inline text-white/30" fill="none" stroke="currentColor" stroke-width="1"><circle cx="8" cy="8" r="5"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2"/></svg> 今日干支：{{ env.ganZhi }}</span>
+      <span><svg viewBox="0 0 16 16" class="w-3 h-3 inline text-white/30" fill="none" stroke="currentColor" stroke-width="1"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg> 农历：{{ env.lunarMonth }}月{{ env.lunarDay }}</span>
     </div>
 
     <!-- 测算目的切换 -->
     <div class="flex gap-3 justify-center">
-      <button @click="purpose='item'" :class="purpose==='item'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2">🔍 寻物</button>
-      <button @click="purpose='person'" :class="purpose==='person'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2">👤 寻人</button>
+      <button @click="purpose='item'" :class="purpose==='item'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2"><svg viewBox="0 0 16 16" class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" stroke-width="1"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg> 寻物</button>
+      <button @click="purpose='person'" :class="purpose==='person'?'btn-cosmic':'btn-cosmic-outline'" class="text-sm px-4 py-2"><svg viewBox="0 0 16 16" class="w-3.5 h-3.5 inline mr-1" fill="none" stroke="currentColor" stroke-width="1"><circle cx="8" cy="5.5" r="3"/><path d="M2 14c0-3.5 3-6 6-6s6 2.5 6 6"/></svg> 寻人</button>
     </div>
 
     <!-- 寻物表单 -->
     <div v-if="purpose==='item'" class="p-4 rounded-2xl bg-slate-900/40 border border-amber-500/20 space-y-3">
-      <h3 class="text-sm font-semibold text-amber-400">🔍 寻物信息</h3>
+      <h3 class="text-sm font-semibold text-amber-400"><svg viewBox="0 0 16 16" class="w-3.5 h-3.5 inline mr-1 text-amber-400/70" fill="none" stroke="currentColor" stroke-width="1"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg> 寻物信息</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div>
           <label class="text-[10px] text-slate-500">物品类型</label>
@@ -192,7 +192,7 @@ function getDirectionHint(liushou: string, gong: string): string {
 
     <!-- 寻人表单 -->
     <div v-if="purpose==='person'" class="p-4 rounded-2xl bg-slate-900/40 border border-sky-500/20 space-y-3">
-      <h3 class="text-sm font-semibold text-sky-400">👤 寻人信息</h3>
+      <h3 class="text-sm font-semibold text-sky-400"><svg viewBox="0 0 16 16" class="w-3.5 h-3.5 inline mr-1 text-sky-400/70" fill="none" stroke="currentColor" stroke-width="1"><circle cx="8" cy="5.5" r="3"/><path d="M2 14c0-3.5 3-6 6-6s6 2.5 6 6"/></svg> 寻人信息</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label class="text-[10px] text-slate-500">对方身份/关系</label>
@@ -212,7 +212,12 @@ function getDirectionHint(liushou: string, gong: string): string {
     <!-- 起卦 -->
     <div class="text-center">
       <button @click="doGua" :disabled="loading" class="btn-cosmic text-lg px-8 py-3 rounded-xl">
-        {{ loading ? '🔮 推演中...' : '☰ 起卦' }}
+        <template v-if="loading">
+          <svg viewBox="0 0 16 16" class="w-4 h-4 inline mr-1 animate-spin" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6" stroke-dasharray="25" stroke-dashoffset="10"/></svg> 推演中...
+        </template>
+        <template v-else>
+          <svg viewBox="0 0 16 16" class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" stroke-width="1"><path d="M2 3h12M2 6.5h12M2 10h12M2 13.5h12"/></svg> 起卦
+        </template>
       </button>
     </div>
 
@@ -240,7 +245,7 @@ function getDirectionHint(liushou: string, gong: string): string {
         :class="pan.duanYu.level==='大吉'||pan.duanYu.level==='吉'?'border-emerald-400/50 shadow-[0_0_20px_rgba(52,211,153,0.12)]':pan.duanYu.level==='凶'?'border-red-400/50 shadow-[0_0_20px_rgba(248,113,113,0.12)]':'border-amber-400/50 shadow-[0_0_20px_rgba(251,191,36,0.12)]'">
         <div class="flex items-center gap-2 mb-3">
           <span class="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_6px_#fbbf24]" />
-          <span class="text-xs font-bold text-amber-300">📌 寻物推演</span>
+          <span class="text-xs font-bold text-amber-300"><svg viewBox="0 0 16 16" class="w-3 h-3 inline mr-1 text-amber-300/70" fill="none" stroke="currentColor" stroke-width="1"><path d="M10 2v12M6 4l-4 3h1.5l-1.5 3h4"/></svg> 寻物推演</span>
         </div>
 
         <div v-if="purpose==='item'" class="space-y-1.5">
@@ -250,7 +255,9 @@ function getDirectionHint(liushou: string, gong: string): string {
           </div>
           <div v-if="envResult" class="flex items-center gap-2 text-xs">
             <span class="text-slate-500">环境匹配：</span>
-            <span class="text-slate-200">{{ envResult.confidenceScore >= 60 ? '✅ 较高' : envResult.confidenceScore >= 30 ? '⚠ 一般' : '❓ 较低' }}</span>
+            <span v-if="envResult.confidenceScore >= 60"><svg viewBox="0 0 16 16" class="w-3 h-3 inline text-emerald-400" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 9l3.5 3.5L13 4"/></svg> 较高</span>
+            <span v-else-if="envResult.confidenceScore >= 30"><svg viewBox="0 0 16 16" class="w-3 h-3 inline text-amber-400" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3M8 11v.5"/></svg> 一般</span>
+            <span v-else><svg viewBox="0 0 16 16" class="w-3 h-3 inline text-rose-400" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"/><path d="M5 5l6 6M11 5l-6 6"/></svg> 较低</span>
             <span class="text-[10px] text-slate-500">({{ envResult.confidenceScore }}%)</span>
           </div>
           <div class="flex items-center gap-2 text-xs">
